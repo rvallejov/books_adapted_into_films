@@ -52,14 +52,15 @@ class Wiki_books(Spider):
                 if (film_title == []):
                     film_title = book.xpath('.//td[2]/i/text()').extract()
 
-                for ,b_year in zip(film_title, film_year):
-                    item = WikiBooksItem()
-                    item['book_title'] = list(map(lambda x: [x],book_title))
-                    item['book_year'] = book_year
-                    item['book_author'] = book_author
-                    item['film_title'] = film
-                    item['film_year'] = year
-                    yield item
+                for b_title,b_year in zip(book_title, book_year):
+                    for f_title,f_year in zip(film_title, film_year):
+                        item = WikiBooksItem()
+                        item['book_title'] = b_title
+                        item['book_year'] = b_year
+                        item['book_author'] = book_author
+                        item['film_title'] = f_title
+                        item['film_year'] = f_year
+                        yield item
 
                 # item = WikiBooksItem()
                 # item['book_title'] = list(map(lambda x: [x],book_title))

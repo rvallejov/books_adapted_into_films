@@ -1,1 +1,6 @@
 *.csv
+.Rhistory
+.Rproj.user
+.Rproj.user
+goodreads_shiny.Rproj
+.RData
