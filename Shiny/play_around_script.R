@@ -41,12 +41,11 @@ goodreads.data <- goodreads.data %>%
 rm(goodreads.data.2)
 rm(cat.correction)
 
-genres <- sort(unique(goodreads.data$genre))
-
 nrow(goodreads.data)
 goodreads.data <- distinct(goodreads.data,author,book_title, .keep_all = TRUE)
 goodreads.data %>%
-  filter(str_count(book_title,"Harry Potter") > 0)
+  filter(str_count(author,"Stephenie Meyer") > 0)
+  # filter(str_count(book_title,"Harry Potter") > 0)
 
 books.into.films <- left_join(goodreads.data,
                               wiki.data,
@@ -63,12 +62,16 @@ books.into.films <- books.into.films %>%
 head(books.into.films)
 summary(books.into.films)
 books.into.films %>%
-  filter(adapted.film == 1) %>%
-  head(10)
+  # filter(adapted.film == 1, str_count(book_year,",") == 0) %>%
+  filter(str_count(book_year,",") == 0) %>%
+  distinct(book_title) %>%
+  dim(.)
 books.into.films %>%
   filter(str_count(film_title,"Hunger Games") > 0)
 books.into.films %>%
   filter(str_count(book_title,"Harry Potter") > 0)
+books.into.films %>%
+  filter(str_count(book_title,"Twilight") > 0)
 
 top.categories <- goodreads.data %>%
                     group_by(category) %>%
@@ -80,7 +83,6 @@ goodreads.data %>%
   ggplot(aes(x=category,y=ratings)) +
   geom_boxplot()
 
-
 g <- books.into.films %>%
   group_by(author,book_title) %>% 
   summarise(book_year = max(book_year), 
@@ -88,7 +90,7 @@ g <- books.into.films %>%
             ratings = max(ratings),
             reviews = max(reviews),
             adapted.film = max(adapted.film)) %>% 
-  ggplot(aes(x=book_title,y=avg_rating)) +
+  ggplot(aes(x=avg_rating,y=log(ratings))) +
   geom_point(aes(text=sprintf("Book: %s<br>Ratings: %s<br>Adapted: %s",
                               book_title, comma(ratings), adapted.film),
                  col=as.character(adapted.film))) + 
@@ -99,21 +101,82 @@ g <- books.into.films %>%
   labs(title = paste0(length(unique(books.into.films$book_title))," books"))
 ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)
 
+g <- books.into.films %>%
+  filter(str_count(book_year,",") == 0, str_count(film_year,",") == 0 | is.na(film_year)) %>% 
+  group_by(author,book_title) %>% 
+  summarise(book_year = max(book_year), 
+            avg_rating = max(avg_rating), 
+            ratings = max(ratings),
+            reviews = max(reviews),
+            adapted.film = max(adapted.film)) %>% 
+  ggplot(aes(x=avg_rating,y=log(ratings))) +
+  geom_point(aes(text=sprintf("Book: %s<br>Ratings: %s<br>Adapted: %s",
+                              book_title, comma(ratings), adapted.film),
+                 col=as.character(adapted.film))) + 
+  # theme(axis.text.x=element_blank(),
+  #       axis.ticks.x=element_blank(),
+  #       panel.grid.major = element_blank(),
+  #       panel.grid.minor = element_blank()) +
+  labs(title = paste0(length(unique(books.into.films$book_title))," books"))
+ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)
 
 g <- books.into.films %>%
-  group_by(year) %>%
-  summarise(ratings = sum(ratings), avg_rating = mean(avg_rating), reviews = sum(reviews)) %>%
-  ggplot(aes(x=book_year,y=ratings)) +
-  geom_col(aes(fill = reviews)) +
-  scale_fill_gradient(low = "blue", high = "red") +
-  coord_cartesian(xlim = c(1950, 2018))
+  filter(str_count(book_year,",") == 0, str_count(film_year,",") == 0) %>% 
+  group_by(author,book_title) %>% 
+  summarise(book_year = max(book_year), 
+            avg_rating = max(avg_rating), 
+            ratings = max(ratings),
+            reviews = max(reviews),
+            adapted.film = max(adapted.film)) %>% 
+  group_by(book_year) %>%
+  summarise(ratings = sum(ratings),
+            avg_rating = mean(avg_rating),
+            reviews = sum(reviews),
+            adapted.film = mean(adapted.film),
+            n = n()) %>%
+  ggplot(aes(x=as.integer(book_year),y=n)) +
+  geom_col(aes(color = adapted.film)) +
+  scale_color_gradient(low = "blue", high = "red")
 ggplotly(g) %>% config(displayModeBar = FALSE)
 
-goodreads.data %>%
-  filter(str_sub(book_title,1,1) == "F") %>%
-  arrange(book_title)
+g <- books.into.films %>%
+  filter(str_count(book_year,",") == 0, str_count(film_year,",") == 0) %>% 
+  group_by(author,book_title) %>% 
+  summarise(book_year = max(book_year), 
+            avg_rating = max(avg_rating), 
+            ratings = max(ratings),
+            reviews = max(reviews),
+            adapted.film = max(adapted.film)) %>% 
+  group_by(book_year) %>%
+  summarise(ratings = sum(ratings),
+            avg_rating = mean(avg_rating),
+            reviews = sum(reviews),
+            adapted.film = mean(adapted.film),
+            n = n()) %>%
+  ggplot(aes(x=n,y=adapted.film)) +
+  geom_point(aes(color = as.integer(book_year))) +
+  scale_color_gradient(low = "blue", high = "red")
+ggplotly(g) %>% config(displayModeBar = FALSE)
 
+books.into.films %>% 
+  filter(str_count(book_year,",") == 0, str_count(film_year,",") == 0) %>% 
+  mutate(book_year = as.integer(book_year)) %>% 
+  group_by(author,book_title) %>% 
+  summarise(book_year = max(book_year), 
+            avg_rating = max(avg_rating), 
+            ratings = max(ratings),
+            reviews = max(reviews),
+            adapted.film = max(adapted.film)) %>% 
+  group_by(adapted.film) %>% 
+  summarise(book_year = mean(book_year), 
+            avg_rating = mean(avg_rating), 
+            ratings.p.book = mean(ratings),
+            total.ratings = sum(ratings),
+            reviews = mean(reviews),
+            n = n())
 
+books.into.films %>%
+  filter(str_count(film_year,",") > 0)
 
 
 
