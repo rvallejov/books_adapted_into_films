@@ -135,11 +135,11 @@ class Wiki_books(Spider):
             try:
                 b_f_title = process.extractOne(f_title, book_title, scorer = fuzz.ratio, score_cutoff = 80)[0]
             except:
-                b_f_title = b_title
+                b_f_title = book_title[0]
             b_f_year = "-".join(book_year[book_title.index(b_f_title)])
         else:
-            b_f_title = b_title
-            b_f_year = "-".join(b_year)
+            b_f_title = ", ".join(book_title)
+            b_f_year = "-".join(book_year[0])
         item = WikiBooksItem()
         item['book_title'] = b_f_title
         item['book_year'] = b_f_year
