@@ -1,5 +1,6 @@
 from scrapy import Spider, Request
 from wiki_books.items import WikiBooksItem
+from fuzzywuzzy import fuzz,process
 import re
 
 class Wiki_books(Spider):
@@ -10,16 +11,11 @@ class Wiki_books(Spider):
     def parse(self,response):
         result_urls = list(map(lambda x: "".join(['https://en.wikipedia.org',x]),response.xpath('//a[@class="mw-redirect"]/@href').extract()[1:5]))
 
-        print(len(result_urls))
-        print('o'*50)
-
         for url in result_urls:
             yield Request(url=url, callback=self.parse_result_page)
 
     def parse_result_page(self, response):
         books = response.xpath('//table[@class="wikitable"]/tbody/tr')
-        print(len(books))
-        print('+'*50)
 
         for book in books[1:]:
             try:
@@ -54,7 +50,7 @@ class Wiki_books(Spider):
                 
                 film_wiki = list(map(lambda x: "".join(['https://en.wikipedia.org',x]),book.xpath('.//td[2]/i/a/@href').extract()))
 
-                print(len(film_wiki))
+                print(film_wiki)
                 print('*'*50)
                 for url,f_title,f_year in zip(film_wiki,film_title, film_year):
                     if (url != [] or re.search('[^(en)]\.wikipedia',url) == None):
@@ -89,7 +85,8 @@ class Wiki_books(Spider):
         try:
             imdb_url = list(filter(lambda x: re.search('www.imdb.com',x) != None,links))[-1]
             
-            print('=='*50)
+            print(f_title)
+            print('='*50)
             
             yield Request(url=imdb_url, callback=self.parse_imdb_page,
                             meta={'book_title': book_title,
@@ -99,7 +96,6 @@ class Wiki_books(Spider):
                                     'f_year': f_year})
         except:
             print('No imdb url')
-            print('X'*50)
 
     def parse_imdb_page(self,response):
         book_title = response.meta['book_title']
@@ -130,18 +126,54 @@ class Wiki_books(Spider):
             film_critic_reviews = int(re.sub('[\D]','',list(filter(lambda x: re.search('critic',x) != None,user_critic))[0]))
         except:
             film_critic_reviews = ''
+        print('++'*50)
+        print(book_title)
+        print(book_year)
+        print(f_title)
+        print('++'*50)
+        if len(book_year) > 1:
+            try:
+                b_f_title = process.extractOne(f_title, book_title, scorer = fuzz.ratio, score_cutoff = 80)[0]
+            except:
+                b_f_title = b_title
+            b_f_year = "-".join(book_year[book_title.index(b_f_title)])
+        else:
+            b_f_title = b_title
+            b_f_year = "-".join(b_year)
+        item = WikiBooksItem()
+        item['book_title'] = b_f_title
+        item['book_year'] = b_f_year
+        item['book_author'] = book_author
+        item['film_title'] = f_title
+        item['film_year'] =  "-".join(f_year)
+        item['film_director'] = film_director
+        item['film_avg_rating'] = film_avg_rating
+        item['film_ratings'] = film_ratings
+        item['film_meta_score'] = film_meta_score
+        item['film_user_reviews'] = film_user_reviews
+        item['film_critic_reviews'] = film_critic_reviews
+        yield item
 
-        for b_title,b_year in zip(book_title, book_year):
-            item = WikiBooksItem()
-            item['book_title'] = b_title
-            item['book_year'] = "-".join(b_year)
-            item['book_author'] = book_author
-            item['film_title'] = f_title
-            item['film_year'] =  "-".join(f_year)
-            item['film_director'] = film_director
-            item['film_avg_rating'] = film_avg_rating
-            item['film_ratings'] = film_ratings
-            item['film_meta_score'] = film_meta_score
-            item['film_user_reviews'] = film_user_reviews
-            item['film_critic_reviews'] = film_critic_reviews
-            yield item
+        # for b_title,b_year in zip(book_title, book_year):
+        #     if len(book_year) > 1:
+        #         try:
+        #             b_f_title = process.extractOne(f_title, book_title, scorer = fuzz.ratio, score_cutoff = 80)[0]
+        #         except:
+        #             b_f_title = b_title
+        #         b_f_year = "-".join(book_year[book_title.index(b_f_title)])
+        #     else:
+        #         b_f_title = b_title
+        #         b_f_year = "-".join(b_year)
+        #     item = WikiBooksItem()
+        #     item['book_title'] = b_f_title
+        #     item['book_year'] = b_f_year
+        #     item['book_author'] = book_author
+        #     item['film_title'] = f_title
+        #     item['film_year'] =  "-".join(f_year)
+        #     item['film_director'] = film_director
+        #     item['film_avg_rating'] = film_avg_rating
+        #     item['film_ratings'] = film_ratings
+        #     item['film_meta_score'] = film_meta_score
+        #     item['film_user_reviews'] = film_user_reviews
+        #     item['film_critic_reviews'] = film_critic_reviews
+        #     yield item
