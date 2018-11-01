@@ -36,6 +36,10 @@ goodreads.data <- distinct(goodreads.data,author,book_title, .keep_all = TRUE)
 wiki.data %>%
   filter(str_count(book_author,"Suzanne Collins") > 0) %>% 
   select(film_title, book_title, film_ratings)
+
+wiki.data %>%
+  filter(str_count(film_director,"Fincher") > 0) %>% 
+  select(film_title, book_title, film_ratings)
   
 goodreads.data %>% 
   filter(str_count(author,"Suzanne Collins") > 0) %>% 
@@ -115,7 +119,7 @@ wiki.data %>%
 books.into.films %>%
   filter(str_count(book_title,"Harry Potter") > 0)
 books.into.films %>%
-  filter(str_count(book_title,"Twilight") > 0)
+  filter(str_count(film_director,"Fincher") > 0)
 
 # Get the top genres of books by number of ratings
 top.categories <- goodreads.data %>%
@@ -204,26 +208,9 @@ g <- books.into.films %>%
                  col=film_avg_rating),
              alpha = 0.5) + 
   scale_color_gradient(low = "blue", high = "red") +
-  facet_grid(.~adapted.film) +
+  # facet_grid(.~adapted.film) +
   labs(title = paste0(length(unique(books.into.films$book_title))," books"))
 ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)
-
-g <- books.scatter %>%
-  filter(adapted.film == 1) %>%
-  group_by(book_year) %>%
-  summarise(ratings = sum(ratings),
-            avg_rating = mean(avg_rating),
-            reviews = sum(reviews),
-            n = n()) %>% 
-  ggplot(aes(x=book_year,y=film_year)) +
-  geom_point(aes(text=sprintf("Book: %s<br>Book year: %s<br>Film year: %s<br>Ratings: %s<br>Film ratings: %s",
-                              book_title, book_year, film_year, comma(ratings), comma(film_ratings)),
-                 col=film_avg_rating),
-             alpha = 0.5) + 
-  scale_color_gradient(low = "blue", high = "red") +
-  labs(title = paste0(length(unique(books.into.films$book_title))," books"))
-ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)
-
 
 g <- films.scatter %>% 
   ggplot(aes(x=film_title,y=film_year)) +
@@ -238,11 +225,12 @@ g <- films.scatter %>%
 ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)
 
 g <- films.scatter %>% 
-  ggplot(aes(x=avg_rating,y=film_avg_rating)) +
+  ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
   geom_point(aes(text=sprintf("Book: %s<br>Film avg. rating: %s<br>Book avg. rating: %s",
                               book_title, avg_rating, film_avg_rating),
                  col=film_year),
              alpha = 0.8) + 
+  geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
   scale_color_gradient(low = "blue", high = "red") +
   labs(title = paste0(length(unique(films.scatter$film_title))," films"),
        x = "Book avg. rating",
@@ -276,13 +264,14 @@ g <- films.scatter %>%
             film_avg_rating = mean(film_avg_rating),
             film_ratings = sum(film_ratings),
             n = n()) %>% 
-  ggplot(aes(x=avg_rating,y=film_avg_rating)) +
+  ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
   geom_point(aes(text=sprintf("Film director: %s<br>Film avg. rating: %s<br>Book avg. rating: %s<br>Film adaptations: %s",
                               film_director, avg_rating, film_avg_rating, n),
-                 col=n),
-             alpha = 0.8) + 
+                 col = n, size = n),
+             alpha = 0.5) + 
+  geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
   scale_color_gradient(low = "blue", high = "red") +
-  labs(title = paste0(length(unique(films.scatter$film_title))," films"),
+  labs(title = paste0(length(unique(films.scatter$film_director))," directors"),
        x = "Book avg. rating",
        y = "Film avg. rating")
 ggplotly(g,tooltip = "text") %>% config(displayModeBar = FALSE)

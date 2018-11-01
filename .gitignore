@@ -1,10 +1,13 @@
 *.csv
+
 .Rhistory
+
 .Rproj.user
-.Rproj.user
+
 goodreads_shiny.Rproj
+
 .RData
+
 www
-rsconnect/shinyapps.io/rvallejov/BooksAdaptedIntoFilms.dcf
-./rsconnect/shinyapps.io/rvallejov/BooksAdaptedIntoFilms.dcf
+
 rsconnect

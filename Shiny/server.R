@@ -86,33 +86,45 @@ shinyServer(function(input, output){
       config(displayModeBar = FALSE)
   })
   
-  # output$barchart2 <- renderPlot({
-  #   films.scatter %>%
-  #     group_by(book_year) %>%
-  #     summarise(film_ratings = sum(film_ratings),
-  #               film_avg_rating = mean(film_avg_rating, na.rm = TRUE),
-  #               n = n()) %>% 
-  #     ggplot(aes(x=as.numeric(book_year),y=n)) +
-  #     geom_col(aes(text=sprintf("Year: %s<br>Number of films: %s<br>Film ratings: %s",
-  #                               book_year, n, comma(film_ratings)),
-  #                  fill=film_ratings)) + 
-  #     scale_fill_gradient(low = "blue", high = "red") +
-  #     labs(title = "Films based on books",
-  #          x = "First published",
-  #          y = "Films")
-  # })
-  
   output$scatter4 <- renderPlotly({
     p <- films.scatter %>% 
-      ggplot(aes(x=book_year,y=film_year)) +
-      geom_point(aes(text=sprintf("Book: %s<br>Book year: %s<br>Film year: %s<br>Film ratings: %s",
-                                  book_title, book_year, film_year, comma(film_ratings)),
-                     col=log(film_ratings)),
-                 alpha = 0.6) + 
+      ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
+      geom_point(aes(text=sprintf("Book: %s<br>Film avg. rating: %s<br>Book avg. rating: %s",
+                                  book_title, avg_rating, film_avg_rating),
+                     col=film_year),
+                 alpha = 0.8) + 
+      geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
       scale_color_gradient(low = "blue", high = "red") +
-      labs(title = paste0(length(films.scatter$film_title)," film adaptations"),
-           x = "Book publish year",
-           y = "Film release year")
+      labs(title = paste0(length(unique(films.scatter$film_title))," films"),
+           x = "Book avg. rating",
+           y = "Film avg. rating")
+    ggplotly(p,tooltip = "text") %>%
+      config(displayModeBar = FALSE)
+  })
+  
+  output$scatter5 <- renderPlotly({
+    p <- films.scatter %>% 
+      filter(film_director != "") %>% 
+      group_by(film_director) %>% 
+      summarise(book_year = max(as.integer(book_year)), 
+                avg_rating = mean(avg_rating), 
+                ratings = sum(ratings),
+                reviews = sum(reviews),
+                adapted.film = max(adapted.film),
+                film_year = mean(as.integer(film_year)),
+                film_avg_rating = mean(film_avg_rating),
+                film_ratings = sum(film_ratings),
+                n = n()) %>% 
+      ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
+      geom_point(aes(text=sprintf("Film director: %s<br>Film avg. rating: %s<br>Book avg. rating: %s<br>Film adaptations: %s",
+                                  film_director, avg_rating, film_avg_rating, n),
+                     col = n, size = n),
+                 alpha = 0.5) + 
+      geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
+      scale_color_gradient(low = "blue", high = "red") +
+      labs(title = paste0(length(unique(films.scatter$film_director))," directors"),
+           x = "Book avg. rating",
+           y = "Film avg. rating")
     ggplotly(p,tooltip = "text") %>%
       config(displayModeBar = FALSE)
   })
