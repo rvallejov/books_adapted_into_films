@@ -44,7 +44,7 @@ shinyServer(function(input, output){
       ggplot(aes(x=avg_rating,y=log(ratings))) +
       geom_point(aes(text=sprintf("Book: %s<br>Ratings: %s<br>Avg. rating : %s",
                                   book_title, comma(ratings), avg_rating),
-                     col=log(reviews)),
+                     col=reviews),
                  alpha = 0.6) + 
       scale_color_gradient(low = "blue", high = "red") +
       labs(title = paste0(comma(sum(books.scatter$ratings))," ratings"),
@@ -89,13 +89,16 @@ shinyServer(function(input, output){
   output$scatter4 <- renderPlotly({
     p <- films.scatter %>% 
       ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
-      geom_point(aes(text=sprintf("Book: %s<br>Film avg. rating: %s<br>Book avg. rating: %s",
-                                  book_title, avg_rating, film_avg_rating),
+      geom_point(aes(text=sprintf("Book: %s<br>Film: %s<br>Film avg. rating: %s<br>Book avg. rating: %s",
+                                  book_title, film_title, film_avg_rating/2, avg_rating),
                      col=film_year),
                  alpha = 0.8) + 
       geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
       scale_color_gradient(low = "blue", high = "red") +
-      labs(title = paste0(length(unique(films.scatter$film_title))," films"),
+      labs(title = paste0(length(films.scatter$film_title),
+                          " films: Only ",
+                          sum(films.scatter$avg_rating < films.scatter$film_avg_rating/2, na.rm = TRUE),
+                          " better than the book"),
            x = "Book avg. rating",
            y = "Film avg. rating")
     ggplotly(p,tooltip = "text") %>%
@@ -103,26 +106,18 @@ shinyServer(function(input, output){
   })
   
   output$scatter5 <- renderPlotly({
-    p <- films.scatter %>% 
-      filter(film_director != "") %>% 
-      group_by(film_director) %>% 
-      summarise(book_year = max(as.integer(book_year)), 
-                avg_rating = mean(avg_rating), 
-                ratings = sum(ratings),
-                reviews = sum(reviews),
-                adapted.film = max(adapted.film),
-                film_year = mean(as.integer(film_year)),
-                film_avg_rating = mean(film_avg_rating),
-                film_ratings = sum(film_ratings),
-                n = n()) %>% 
+     
+    p <- directors.scatter %>% 
       ggplot(aes(x=avg_rating,y=film_avg_rating/2)) +
       geom_point(aes(text=sprintf("Film director: %s<br>Film avg. rating: %s<br>Book avg. rating: %s<br>Film adaptations: %s",
-                                  film_director, avg_rating, film_avg_rating, n),
+                                  film_director, film_avg_rating/2, avg_rating, n),
                      col = n, size = n),
                  alpha = 0.5) + 
       geom_abline(aes(slope = 1, intercept = 0),col = "grey") + 
       scale_color_gradient(low = "blue", high = "red") +
-      labs(title = paste0(length(unique(films.scatter$film_director))," directors"),
+      labs(title = paste0(length(directors.scatter$film_director)," directors: Only ",
+                          sum(directors.scatter$avg_rating < directors.scatter$film_avg_rating/2, na.rm = TRUE),
+                          " better than the book"),
            x = "Book avg. rating",
            y = "Film avg. rating")
     ggplotly(p,tooltip = "text") %>%

@@ -117,7 +117,7 @@ books.into.films %>%
 wiki.data %>%
   filter(str_count(book_author,"Suzanne Collins") > 0)
 books.into.films %>%
-  filter(str_count(book_title,"Harry Potter") > 0)
+  filter(str_count(book_title,"I Am Legend") > 0)
 books.into.films %>%
   filter(str_count(film_director,"Fincher") > 0)
 

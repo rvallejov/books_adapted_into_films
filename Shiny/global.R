@@ -5,7 +5,7 @@ library(ggplot2)
 library(tidyr)
 library(scales)
 library(stringr)
-library(car)
+# library(car)
 
 # LOAD THE DATA
 books.into.films <- fread(file = "books_into_films.csv", stringsAsFactors = FALSE)
@@ -35,3 +35,15 @@ films.scatter <- books.into.films %>%
             film_avg_rating = max(film_avg_rating),
             film_ratings = max(film_ratings))
 
+directors.scatter <- films.scatter %>% 
+  filter(film_director != "") %>% 
+  group_by(film_director) %>% 
+  summarise(book_year = max(as.integer(book_year)), 
+            avg_rating = mean(avg_rating), 
+            ratings = sum(ratings),
+            reviews = sum(reviews),
+            adapted.film = max(adapted.film),
+            film_year = mean(as.integer(film_year)),
+            film_avg_rating = mean(film_avg_rating),
+            film_ratings = sum(film_ratings),
+            n = n())
