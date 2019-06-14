@@ -1,4 +1,4 @@
-# Are adapted screenplays beter that their original books? 
+# Are adapted screenplays better that their original books? 
 
 Obviously not, but I wanted to find out by how much and if the public agreed.
 
