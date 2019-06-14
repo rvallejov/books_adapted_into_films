@@ -1,4 +1,10 @@
-# books_adapted_into_films
+# Are adapted screenplays beter that their original books? 
+
+Obviously not, but I wanted to find out by how much and if the public agreed.
+
+A simple graph sheds some light on the topic. The code and data behind it make up the iceberg of work it took to get to these littles graphs.
+
+
 Shiny app: <br>
 https://rvallejov.shinyapps.io/BooksAdaptedIntoFilms/
 
